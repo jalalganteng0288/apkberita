@@ -3,6 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'home_page.dart';
+// import 'register_page.dart'; // Nanti dibuat
+// import 'forgot_password_page.dart'; // Nanti dibuat
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,29 +15,45 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _usernameController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
 
   Future<void> _login() async {
     final username = _usernameController.text.trim();
+    final password = _passwordController.text.trim();
 
-    if (username.isEmpty) {
+    if (username.isEmpty || password.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Silakan masukkan username')),
+        const SnackBar(content: Text('Silakan masukkan username dan password')),
       );
       return;
     }
 
-    setState(() => _isLoading = true);
+    // Contoh validasi login sederhana
+    if (username == 'admin' && password == '1234') {
+      setState(() => _isLoading = true);
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('username', username);
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('username', username);
+      if (!mounted) return;
+      setState(() => _isLoading = false);
 
-    setState(() => _isLoading = false);
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const HomePage()),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Username atau password salah')),
+      );
+    }
+  }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (_) => const HomePage()),
-    );
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 
   @override
@@ -75,6 +93,18 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                 ),
               ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  prefixIcon: const Icon(Icons.lock),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
@@ -87,15 +117,28 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   child: _isLoading
-                      ? const CircularProgressIndicator(
-                          color: Colors.white,
-                        )
-                      : const Text(
-                          'Masuk',
-                          style: TextStyle(fontSize: 16),
-                        ),
+                      ? const CircularProgressIndicator(color: Colors.white)
+                      : const Text('Masuk', style: TextStyle(fontSize: 16)),
                 ),
               ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  TextButton(
+                    onPressed: () {
+                      // Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterPage()));
+                    },
+                    child: const Text('Daftar'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      // Navigator.push(context, MaterialPageRoute(builder: (_) => const ForgotPasswordPage()));
+                    },
+                    child: const Text('Lupa Password?'),
+                  ),
+                ],
+              )
             ],
           ),
         ),
